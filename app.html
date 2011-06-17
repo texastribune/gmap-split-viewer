@@ -1,0 +1,78 @@
+<html>
+<head>
+  <title>Google Maps Split Viewer</title>
+  <style>
+
+  #map_container { width: 960px; height: 600px; margin: 0 auto; }
+  #map_left { width: 480px; height: 600px; float: left; }
+  #map_right { width: 480px; height: 600px; float: right; }
+
+  </style>
+</head>
+<body>
+
+<div id="map_container">
+  <div id="map_left"></div>
+  <div id="map_right"></div>
+</div>
+
+<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script>
+
+    var mapIsMoving = false;
+var options_left = {
+  center: new google.maps.LatLng(31.25, -105.119), // add, subtract
+  zoom: 6,
+  disableDefaultUI: true,
+  mapTypeId: "roadmap",
+  streetViewControl: false
+};
+
+var options_right = {
+  center: new google.maps.LatLng(31.25, -94.561), // subtract, add
+  zoom: 6,
+  disableDefaultUI: true,
+  mapTypeId: "roadmap",
+  streetViewControl: false
+};
+
+var right_moving = false;
+var left_moving = false;
+
+// 10.558
+
+var mapLeft = new google.maps.Map(document.getElementById("map_left"), options_left);
+var mapRight = new google.maps.Map(document.getElementById("map_right"), options_right);
+var layerLeft = new google.maps.FusionTablesLayer(943233, { map: mapLeft });
+var layerRight = new google.maps.FusionTablesLayer(943363, { map: mapRight });
+
+var mapMover = function(a, b, style) {
+    if (mapIsMoving) { return; }
+
+    mapIsMoving = true;
+    var newZoom = a.getZoom(),
+        bounds = a.getBounds(),
+        southWest = bounds.getSouthWest(),
+        northEast = bounds.getNorthEast(),
+        center = a.getCenter(),
+        lat = center.lat();
+    if (style == "+") {
+        lng = ((southWest.lng() + northEast.lng()) / 2) - (southWest.lng() - northEast.lng());
+    } else {
+        lng = ((southWest.lng() + northEast.lng()) / 2) + (southWest.lng() - northEast.lng());
+    }
+
+    b.setCenter(new google.maps.LatLng(lat, lng));
+    b.setZoom(a.getZoom());
+    mapIsMoving = false;
+};
+
+google.maps.event.addListener(mapLeft, "center_changed", function() { mapMover(mapLeft, mapRight, "+"); });
+google.maps.event.addListener(mapRight, "center_changed", function() { mapMover(mapRight, mapLeft, "-"); });
+google.maps.event.addListener(mapLeft, "zoom_changed", function() { mapMover(mapLeft, mapRight, "+"); });
+google.maps.event.addListener(mapRight, "zoom_changed", function() { mapMover(mapRight, mapLeft, "-"); });
+
+</script>
+</body>
+</html>
+
